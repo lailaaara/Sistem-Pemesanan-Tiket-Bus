@@ -141,3 +141,28 @@ INSERT INTO public.pemesanan_pembayaran (user_id,jadwal_id,kode_booking,jumlah_k
 INSERT INTO public.tiket (pemesanan_id,id_kursi,kode_tiket,status_tiket) VALUES
 (1,1,'TIKET4575','aktif'),
 (1,2,'TIKET1516','aktif');
+
+-- ============================================
+-- TABEL: promo
+-- ============================================
+CREATE TABLE public.promo (
+    promo_id SERIAL PRIMARY KEY,
+    kode_promo VARCHAR(50) UNIQUE,
+    deskripsi TEXT,
+    tipe_diskon VARCHAR(20) CHECK (tipe_diskon IN ('persen','nominal')),
+    nilai_diskon NUMERIC(12,2),
+    min_pembelian NUMERIC(12,2) DEFAULT 0,
+    maks_diskon NUMERIC(12,2) DEFAULT 0,
+    kuota INT,
+    terpakai INT DEFAULT 0,
+    status_promo VARCHAR(20) DEFAULT 'aktif',
+    berlaku_mulai DATE,
+    berlaku_sampai DATE
+);
+
+-- ============================================
+-- SAMPLE DATA: promo
+-- ============================================
+INSERT INTO public.promo (kode_promo, deskripsi, tipe_diskon, nilai_diskon, min_pembelian, maks_diskon, kuota, berlaku_mulai, berlaku_sampai) VALUES
+('DISKON10', 'Diskon 10% minimal pembelian 100rb', 'persen', 10, 100000, 50000, 100, '2024-01-01', '2026-12-31'),
+('HEMAT50K', 'Potongan langsung 50rb minimal pembelian 200rb', 'nominal', 50000, 200000, 0, 50, '2024-01-01', '2026-12-31');

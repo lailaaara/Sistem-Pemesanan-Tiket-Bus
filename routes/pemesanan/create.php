@@ -6,7 +6,9 @@ if (!$user_id || !$jadwal_id || empty($kursi)) {
     response("error", "Data tidak lengkap");
     return;
 }
-$placeholders = implode(',', array_fill(0, count($kursi), '$' . (3)));
+if (!is_array($kursi)) {
+    $kursi = explode(',', $kursi);
+}
 pg_query($conn, "BEGIN");
 
 $query = "

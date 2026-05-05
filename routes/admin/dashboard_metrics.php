@@ -1,8 +1,5 @@
 <?php
-$id_admin = $_GET['id_admin'] ?? '';
-if (!$id_admin) { http_response_code(400); response("error", "id_admin wajib"); return; }
-$cekAdmin = pg_fetch_assoc(pg_query_params($conn, "SELECT role FROM users WHERE id_user=$1", [$id_admin]));
-if (!$cekAdmin || $cekAdmin['role'] !== 'admin') { http_response_code(403); response("error", "Akses ditolak"); return; }
+$id_admin = requireAdmin($conn);
 $rPendapatan = pg_fetch_assoc(pg_query($conn, "
     SELECT COALESCE(SUM(total_harga),0) AS total
     FROM pemesanan_pembayaran

@@ -8,14 +8,15 @@
 *(Cara alternatif via terminal: `psql -U postgres -d tiket_bus -f database.sql`)*
 
 ### 3. Setup Konfigurasi Database (PHP)
-Buka file `config/database.php` dan pastikan konfigurasi password PostgreSQL sesuai dengan password di komputer kamu:
-```php
-$host     = "localhost";
-$port     = "5432";
-$dbname   = "tiket_bus";
-$user     = "postgres";
-$password = "password_kalian"; // <- UBAH INI JIKA BEDA
+Buka file `utils/.env` dan pastikan `DATABASE_URI` sudah sesuai dengan kredensial PostgreSQL kamu. Jika menggunakan database lokal:
+```env
+DATABASE_URI = "host=localhost port=5432 dbname=tiket_bus user=postgres password=password_kamu sslmode=disable"
 ```
+Atau jika menggunakan format URL:
+```env
+DATABASE_URI = "postgresql://postgres:password_kamu@localhost:5432/tiket_bus?sslmode=disable"
+```
+Sistem akan otomatis membaca file `.env` melalui `config/database.php`.
 
 ### 4. Test API
 Base URL API kita adalah:

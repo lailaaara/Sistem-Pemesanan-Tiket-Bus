@@ -1,10 +1,5 @@
 <?php
-$user_id = $_SERVER['HTTP_X_USER_ID'] ?? $_GET['user_id'] ?? '';
-if (!$user_id || !is_numeric($user_id)) {
-    http_response_code(401);
-    response("error", "user_id wajib diisi");
-    return;
-}
+$user_id = requireAuth();
 $result = pg_query_params($conn, "
 SELECT
     p.pemesanan_id,
