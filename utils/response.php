@@ -6,5 +6,6 @@ function response($status, $message, $data = null)
         "message" => $message,
         "data" => $data
     ]);
+    exit;
 }
 ?>

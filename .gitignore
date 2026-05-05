@@ -1,0 +1,17 @@
+# Environment variables (Sensitive data)
+/utils/.env
+
+# Temporary/Scratch files
+/scratch/
+test_db.php
+
+# Logs
+*.log
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Large or dependency folders
+/vendor/
+/node_modules/

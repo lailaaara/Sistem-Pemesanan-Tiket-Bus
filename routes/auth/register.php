@@ -1,7 +1,7 @@
 <?php
-$nama = $_POST['nama'] ?? '';
-$email = $_POST['email'] ?? '';
-$password = $_POST['password'] ?? '';
+$nama = $body['nama'] ?? $_POST['nama'] ?? '';
+$email = $body['email'] ?? $_POST['email'] ?? '';
+$password = $body['password'] ?? $_POST['password'] ?? '';
 if (!$nama || !$email || !$password) {
     response("error", "Data tidak lengkap");
     return;

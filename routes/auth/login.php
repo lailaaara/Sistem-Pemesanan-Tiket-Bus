@@ -1,6 +1,6 @@
 <?php
-$email = $_POST['email'] ?? '';
-$password = $_POST['password'] ?? '';
+$email = $body['email'] ?? $_POST['email'] ?? '';
+$password = $body['password'] ?? $_POST['password'] ?? '';
 if (!$email || !$password) {
     response("error", "Email dan password wajib diisi");
     return;
