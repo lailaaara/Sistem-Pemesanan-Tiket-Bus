@@ -1,0 +1,70 @@
+<?php
+$id_admin = $_GET['id_admin'] ?? '';
+if (!$id_admin) {
+    http_response_code(400);
+    response("error", "id_admin wajib diisi");
+    return;
+}
+$cekAdmin = pg_query_params($conn,
+    "SELECT role FROM users WHERE id_user = $1", [$id_admin]);
+$admin = pg_fetch_assoc($cekAdmin);
+if (!$admin || $admin['role'] !== 'admin') {
+    http_response_code(403);
+    response("error", "Akses ditolak, hanya admin");
+    return;
+}
+$where = '';
+$params = [];
+if (!empty($_GET['status'])) {
+    $where = "WHERE t.status_tiket = $1";
+    $params[] = $_GET['status'];
+}
+$result = pg_query_params($conn, "
+SELECT
+    t.tiket_id,
+    t.kode_tiket,
+    t.status_tiket,
+    k.no_kursi,
+    p.pemesanan_id,
+    p.kode_booking,
+    p.status_pembayaran,
+    u.nama AS nama_user,
+    j.tanggal_berangkat,
+    j.jam_berangkat,
+    b.nama_bus,
+    r.kota_asal,
+    r.kota_tujuan
+FROM tiket t
+JOIN kursi               k ON t.id_kursi     = k.id_kursi
+JOIN pemesanan_pembayaran p ON t.pemesanan_id = p.pemesanan_id
+JOIN users               u ON p.user_id       = u.id_user
+JOIN jadwal              j ON p.jadwal_id     = j.id_jadwal
+JOIN bus                 b ON j.bus_id        = b.bus_id
+JOIN rute                r ON j.rute_id       = r.rute_id
+$where
+ORDER BY t.tiket_id DESC
+", $params);
+if (!$result) {
+    http_response_code(500);
+    response("error", "Gagal mengambil data tiket");
+    return;
+}
+$data = [];
+while ($row = pg_fetch_assoc($result)) {
+    $data[] = [
+        "tiket_id"         => $row['tiket_id'],
+        "kode_tiket"       => $row['kode_tiket'],
+        "status_tiket"     => $row['status_tiket'],
+        "no_kursi"         => $row['no_kursi'],
+        "nama_user"        => $row['nama_user'],
+        "pemesanan_id"     => $row['pemesanan_id'],
+        "kode_booking"     => $row['kode_booking'],
+        "status_pembayaran"=> $row['status_pembayaran'],
+        "bus"              => $row['nama_bus'],
+        "asal"             => $row['kota_asal'],
+        "tujuan"           => $row['kota_tujuan'],
+        "tanggal"          => $row['tanggal_berangkat'],
+        "jam"              => $row['jam_berangkat'],
+    ];
+}
+response("success", count($data) . " tiket ditemukan", $data);
