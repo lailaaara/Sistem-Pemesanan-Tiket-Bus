@@ -19,7 +19,7 @@
 
         <div class="nav-links">
             <a href="/" class="nav-link {{ request()->is('/') ? 'active' : '' }}">Cari Tiket</a>
-            <a href="#" class="nav-link">Tiket Saya</a>
+            <a href="/tickets" class="nav-link {{ request()->is('tickets*') ? 'active' : '' }}">Tiket Saya</a>
             <a href="#" class="nav-link">Bantuan</a>
         </div>
 
