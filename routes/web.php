@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\BookingController;
+use App\Http\Controllers\AdminController;
 use Illuminate\Support\Facades\Route;
 
 // ─── Halaman Utama ────────────────────────────────────────────────────
@@ -16,4 +17,14 @@ Route::get('/booking/success',   [BookingController::class, 'success'])->name('b
 // ─── Kelola Tiket Saya (Fase 3) ───────────────────────────────────────
 Route::get('/tickets',           [BookingController::class, 'ticketsIndex'])->name('booking.tickets');
 Route::get('/tickets/{id}',      [BookingController::class, 'ticketsDetail'])->name('booking.tickets_detail');
+
+// ─── Panel Admin (Fase 4) ─────────────────────────────────────────────
+Route::prefix('admin')->group(function () {
+    Route::get('/',              [AdminController::class, 'dashboard'])->name('admin.dashboard');
+    Route::get('/operasional',   [AdminController::class, 'operasional'])->name('admin.operasional');
+    Route::get('/operasional/tambah', [AdminController::class, 'tambahJadwal'])->name('admin.tambah_jadwal');
+    Route::get('/transaksi',     [AdminController::class, 'transaksi'])->name('admin.transaksi');
+    Route::get('/laporan',       [AdminController::class, 'laporan'])->name('admin.laporan');
+});
+
 
