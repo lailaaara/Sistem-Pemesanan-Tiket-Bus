@@ -57,9 +57,10 @@ class BookingController extends Controller
         // Ambil kursi dari DB; jika kosong gunakan dummy
         $kursiTerisi = DB::table('tiket as t')
             ->join('pemesanan_pembayaran as p', 't.pemesanan_id', '=', 'p.pemesanan_id')
+            ->join('kursi as k', 't.id_kursi', '=', 'k.id_kursi')
             ->where('p.jadwal_id', $jadwalId)
             ->whereIn('p.status_pembayaran', ['lunas', 'pending'])
-            ->pluck('t.id_kursi')
+            ->pluck('k.no_kursi')
             ->toArray();
 
         return view('booking.seat', compact('jadwal', 'kursiTerisi'));
