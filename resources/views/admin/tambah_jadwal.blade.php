@@ -13,7 +13,7 @@
                 <label>Pilih Bus</label>
                 <div class="admin-input-icon-wrap">
                     <select class="admin-input" style="border:none;padding:0;">
-                        <option>Pilih Armada LajuBus...</option>
+                        <option>Pilih Armada BusMania...</option>
                         <option>Laju Prima A1</option>
                         <option>Kencana Luxury 02</option>
                         <option>Agra Mas Jetbus</option>
