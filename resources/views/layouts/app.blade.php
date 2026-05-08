@@ -19,8 +19,8 @@
 
         <div class="nav-links">
             <a href="/" class="nav-link {{ request()->is('/') ? 'active' : '' }}">Cari Tiket</a>
-            <a href="#rute" class="nav-link">Rute</a>
-            <a href="#" class="nav-link">Informasi</a>
+            <a href="{{ route('booking.tickets') }}" class="nav-link {{ request()->is('tickets*') ? 'active' : '' }}">Tiket Saya</a>
+            <a href="#" class="nav-link">Bantuan</a>
         </div>
 
         <div class="nav-actions">

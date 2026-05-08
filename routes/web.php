@@ -17,6 +17,7 @@ Route::get('/booking/success',   [BookingController::class, 'success'])->name('b
 
 // ─── Kelola Tiket Saya (Fase 3) ───────────────────────────────────────
 Route::get('/tickets',           [BookingController::class, 'ticketsIndex'])->name('booking.tickets');
+Route::post('/tickets/search',   [BookingController::class, 'searchTicket'])->name('booking.tickets_search');
 Route::get('/tickets/{id}',      [BookingController::class, 'ticketsDetail'])->name('booking.tickets_detail');
 
 // ─── Autentikasi (Admin Login) ──────────────────────────────────────────

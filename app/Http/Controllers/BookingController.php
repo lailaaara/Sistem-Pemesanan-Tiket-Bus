@@ -168,6 +168,13 @@ class BookingController extends Controller
 
             DB::commit();
 
+            // Simpan kode booking ke session agar otomatis muncul di "Tiket Saya" tanpa perlu login
+            $recentBookings = session()->get('recent_bookings', []);
+            if (!in_array($kodeBooking, $recentBookings)) {
+                $recentBookings[] = $kodeBooking;
+                session()->put('recent_bookings', $recentBookings);
+            }
+
             return redirect()->route('booking.success', ['kode' => $kodeBooking]);
         } catch (\Exception $e) {
             DB::rollBack();
@@ -236,56 +243,98 @@ class BookingController extends Controller
      */
     public function ticketsIndex(Request $request)
     {
-        // Data Mock Tiket Sesuai Desain Referensi
-        $activeTickets = [
-            (object)[
-                'id' => 1,
-                'kode_booking' => 'LJB-992834',
-                'nama_bus' => 'LajuBus',
-                'kelas' => 'Eksekutif',
-                'no_kursi' => '2A',
-                'kota_asal' => 'Jakarta',
-                'tanggal_berangkat' => '27 Mei 2026',
-                'jam_berangkat' => '08:30 WIB',
-                'kota_tujuan' => 'Surabaya',
-                'jam_tiba' => '18:45 WIB',
-                'status' => 'Menunggu Keberangkatan',
-                'status_class' => 'status-pending'
-            ]
-        ];
+        $recentBookings = session()->get('recent_bookings', []);
 
-        $pastTickets = [
-            (object)[
-                'id' => 2,
-                'kode_booking' => 'LJB-883719',
-                'nama_bus' => 'LajuBus',
-                'kelas' => 'Eksekutif',
-                'no_kursi' => '4B',
-                'kota_asal' => 'Semarang',
-                'tanggal_berangkat' => '20 Okt 2023',
-                'jam_berangkat' => '19:00 WIB',
-                'kota_tujuan' => 'Jakarta',
-                'jam_tiba' => '03:15 WIB',
-                'status' => 'Selesai',
-                'status_class' => 'status-success'
-            ],
-            (object)[
-                'id' => 3,
-                'kode_booking' => 'LJB-771822',
-                'nama_bus' => 'LajuBus',
-                'kelas' => 'Eksekutif',
-                'no_kursi' => '12A',
-                'kota_asal' => 'Semarang',
-                'tanggal_berangkat' => '20 Okt 2023',
-                'jam_berangkat' => '19:00 WIB',
-                'kota_tujuan' => 'Jakarta',
-                'jam_tiba' => '03:15 WIB',
-                'status' => 'Selesai',
-                'status_class' => 'status-success'
-            ]
-        ];
+        $activeTickets = [];
+        $pastTickets = [];
+
+        if (!empty($recentBookings)) {
+            // Ambil data pemesanan riil dari DB
+            $tickets = DB::table('pemesanan_pembayaran as p')
+                ->join('jadwal as j', 'p.jadwal_id', '=', 'j.id_jadwal')
+                ->join('bus as b', 'j.bus_id', '=', 'b.bus_id')
+                ->join('rute as r', 'j.rute_id', '=', 'r.rute_id')
+                ->whereIn('p.kode_booking', $recentBookings)
+                ->select(
+                    'p.pemesanan_id as id',
+                    'p.kode_booking',
+                    'b.nama_bus',
+                    'b.kelas',
+                    'r.kota_asal',
+                    'r.kota_tujuan',
+                    'j.tanggal_berangkat',
+                    'j.jam_berangkat',
+                    'p.status_pembayaran'
+                )
+                ->orderBy('j.tanggal_berangkat', 'desc')
+                ->get();
+
+            foreach ($tickets as $ticket) {
+                // Ambil nomor kursi
+                $seats = DB::table('tiket as t')
+                    ->join('kursi as k', 't.id_kursi', '=', 'k.id_kursi')
+                    ->where('t.pemesanan_id', $ticket->id)
+                    ->pluck('k.no_kursi')
+                    ->toArray();
+                
+                $ticket->no_kursi = implode(', ', $seats);
+
+                // Format tanggal berangkat dan jam
+                $ticket->tanggal_berangkat_formatted = \Carbon\Carbon::parse($ticket->tanggal_berangkat)->isoFormat('D MMM YYYY');
+                $ticket->jam_berangkat_formatted = \Carbon\Carbon::parse($ticket->jam_berangkat)->format('H:i') . ' WIB';
+                $ticket->jam_tiba_formatted = \Carbon\Carbon::parse($ticket->jam_berangkat)->addHours(10)->format('H:i') . ' WIB';
+
+                // Tentukan status dan kelas status berdasarkan tanggal keberangkatan
+                $departureDateTime = \Carbon\Carbon::parse($ticket->tanggal_berangkat . ' ' . $ticket->jam_berangkat);
+                $isPast = $departureDateTime->isPast();
+
+                if ($isPast) {
+                    $ticket->status = 'Selesai';
+                    $ticket->status_class = 'status-success';
+                    $pastTickets[] = $ticket;
+                } else {
+                    $ticket->status = 'Menunggu Keberangkatan';
+                    $ticket->status_class = 'status-pending';
+                    $activeTickets[] = $ticket;
+                }
+            }
+        }
 
         return view('booking.tickets_index', compact('activeTickets', 'pastTickets'));
+    }
+
+    /**
+     * Proses pencarian tiket tamu berdasarkan Nomor HP.
+     */
+    public function searchTicket(Request $request)
+    {
+        $request->validate([
+            'no_hp' => 'required|string',
+        ]);
+
+        $noHp = trim($request->input('no_hp'));
+
+        // Cari semua tiket yang memiliki nomor HP tersebut
+        $bookings = DB::table('tiket as t')
+            ->join('pemesanan_pembayaran as p', 't.pemesanan_id', '=', 'p.pemesanan_id')
+            ->where('t.no_hp', $noHp)
+            ->select('p.kode_booking')
+            ->distinct()
+            ->get();
+
+        if ($bookings->isEmpty()) {
+            return redirect()->back()->with('error', 'Tidak ada tiket yang terdaftar dengan Nomor HP tersebut.');
+        }
+
+        $recentBookings = session()->get('recent_bookings', []);
+        foreach ($bookings as $b) {
+            if (!in_array($b->kode_booking, $recentBookings)) {
+                $recentBookings[] = $b->kode_booking;
+            }
+        }
+        session()->put('recent_bookings', $recentBookings);
+
+        return redirect()->route('booking.tickets')->with('success', 'Berhasil memuat ' . count($bookings) . ' tiket Anda!');
     }
 
     /**
@@ -293,32 +342,82 @@ class BookingController extends Controller
      */
     public function ticketsDetail($id)
     {
-        // Mock data untuk detail tiket LJB-992834
+        $pemesanan = DB::table('pemesanan_pembayaran as p')
+            ->join('jadwal as j', 'p.jadwal_id', '=', 'j.id_jadwal')
+            ->join('bus as b', 'j.bus_id', '=', 'b.bus_id')
+            ->join('rute as r', 'j.rute_id', '=', 'r.rute_id')
+            ->where('p.pemesanan_id', $id)
+            ->select(
+                'p.*', 
+                'j.tanggal_berangkat', 
+                'j.jam_berangkat', 
+                'b.nama_bus', 
+                'b.kelas', 
+                'b.no_polisi', 
+                'b.fasilitas', 
+                'r.kota_asal', 
+                'r.kota_tujuan'
+            )
+            ->first();
+
+        if (!$pemesanan) {
+            return redirect()->route('booking.tickets')->with('error', 'Detail tiket tidak ditemukan.');
+        }
+
+        $tiketList = DB::table('tiket as t')
+            ->join('kursi as k', 't.id_kursi', '=', 'k.id_kursi')
+            ->where('t.pemesanan_id', $id)
+            ->get();
+
+        $penumpangList = [];
+        foreach ($tiketList as $t) {
+            $penumpangList[] = (object)[
+                'nama' => $t->nama_penumpang,
+                'no_kursi' => $t->no_kursi,
+                'tipe_bus' => $pemesanan->kelas,
+                'status' => 'Terkonfirmasi'
+            ];
+        }
+
+        // Get facilities
+        $fasilitas = [];
+        if (!empty($pemesanan->fasilitas)) {
+            $decoded = json_decode($pemesanan->fasilitas, true);
+            if (is_array($decoded)) {
+                $fasilitas = $decoded;
+            } else {
+                $fasilitas = array_map('trim', explode(',', $pemesanan->fasilitas));
+            }
+        }
+        if (empty($fasilitas)) {
+            $fasilitas = ['Wiai', 'AC', 'Leg Rest'];
+        }
+
+        // Parse status_pembayaran to human-readable status
+        $statusText = 'Menunggu Keberangkatan';
+
+        // Departure and arrival dates
+        $tanggalBerangkat = \Carbon\Carbon::parse($pemesanan->tanggal_berangkat)->isoFormat('dddd, D MMM YYYY');
+        $tanggalTiba = \Carbon\Carbon::parse($pemesanan->tanggal_berangkat)->isoFormat('dddd, D MMM YYYY'); // Default same day
+
         $ticket = (object)[
-            'id' => $id,
-            'kode_booking' => 'LJB-992834',
-            'status' => 'Menunggu Keberangkatan',
-            'nama_bus' => 'LajuBus Executive',
-            'no_bus' => 'LB-2045-A',
-            'jam_berangkat' => '08:30',
-            'tanggal_berangkat' => 'Senin, 27 Mei 2026',
-            'terminal_asal' => 'Terminal Pulo Gebang, Jakarta',
-            'jam_tiba' => '18:45',
-            'tanggal_tiba' => 'Senin, 27 Mei 2026',
-            'terminal_tujuan' => 'Terminal Bungurasih, Surabaya',
-            'fasilitas' => ['Wiai', 'AC', 'Leg Rest'], // 'Wiai' match typo in user screenshot "Wiai"
-            'penumpang' => [
-                (object)[
-                    'nama' => 'siapa ya namanya',
-                    'no_kursi' => '2A',
-                    'tipe_bus' => 'Executive',
-                    'status' => 'Terkonfirmasi'
-                ]
-            ],
-            'harga_tiket' => 300000,
+            'id' => $pemesanan->pemesanan_id,
+            'kode_booking' => $pemesanan->kode_booking,
+            'status' => $statusText,
+            'nama_bus' => $pemesanan->nama_bus,
+            'no_bus' => $pemesanan->no_polisi ?? 'LB-2045-A',
+            'jam_berangkat' => \Carbon\Carbon::parse($pemesanan->jam_berangkat)->format('H:i'),
+            'tanggal_berangkat' => $tanggalBerangkat,
+            'terminal_asal' => 'Terminal Pulo Gebang, ' . $pemesanan->kota_asal,
+            'jam_tiba' => \Carbon\Carbon::parse($pemesanan->jam_berangkat)->addHours(10)->format('H:i'),
+            'tanggal_tiba' => $tanggalTiba,
+            'terminal_tujuan' => 'Terminal Bungurasih, ' . $pemesanan->kota_tujuan,
+            'fasilitas' => $fasilitas,
+            'penumpang' => $penumpangList,
+            'harga_tiket' => count($tiketList) > 0 ? ($pemesanan->total_harga / count($tiketList)) : $pemesanan->total_harga,
             'biaya_layanan' => 5000,
-            'total_bayar' => 305000,
-            'info_pembayaran' => 'Pembayaran berhasil menggunakan Transfer Bank BCA pada 26 Mei 2026, 14:00 WIB.'
+            'total_bayar' => $pemesanan->total_harga + 5000,
+            'info_pembayaran' => 'Pembayaran berhasil menggunakan ' . ($pemesanan->metode_pembayaran == 'va' ? 'Transfer Bank BCA' : strtoupper($pemesanan->metode_pembayaran)) . ' pada ' . \Carbon\Carbon::parse($pemesanan->tanggal_bayar ?? $pemesanan->tanggal_pemesanan)->isoFormat('D MMM YYYY, H:i') . ' WIB.'
         ];
 
         return view('booking.tickets_detail', compact('ticket'));
