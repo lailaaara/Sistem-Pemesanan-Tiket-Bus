@@ -25,13 +25,16 @@
         <div class="sb-item">
             <i class="ph ph-calendar-blank"></i>
             <div>
+            <div>
                 <span class="sb-label">TANGGAL</span>
                 <span class="sb-value">{{ \Carbon\Carbon::parse($date)->isoFormat('ddd, D MMM YYYY') }}</span>
             </div>
         </div>
-        <a href="/" class="btn btn-outline-sm">
-            <i class="ph ph-pencil"></i> Ubah Pencarian
-        </a>
+        <div style="margin-left: auto;">
+            <a href="/" class="btn btn-outline-sm" style="border-color: transparent; color: var(--text-main);">
+                <strong>Ubah Pencarian</strong> <i class="ph ph-pencil-simple" style="font-size:1.1rem; color:var(--text-muted);"></i>
+            </a>
+        </div>
     </div>
 </div>
 
@@ -73,6 +76,21 @@
             <label class="check-item"><input type="checkbox"> Snack & Air Mineral</label>
             <label class="check-item"><input type="checkbox"> Reclining Seat</label>
         </div>
+
+        {{-- Operator Bus --}}
+        <div class="filter-group">
+            <h4>Operator Bus</h4>
+            <label class="check-item"><input type="checkbox" checked> LajuBus</label>
+            <label class="check-item"><input type="checkbox"> Pahala Kencana</label>
+            <label class="check-item"><input type="checkbox"> Rosalia Indah</label>
+            <label class="check-item"><input type="checkbox"> Sinar Jaya</label>
+        </div>
+
+        {{-- Titik Jemput --}}
+        <div class="filter-group" style="border-bottom: none; padding-bottom: 0;">
+            <h4>Titik Jemput</h4>
+            <label class="check-item"><input type="checkbox"> Pulo Gebang</label>
+        </div>
     </aside>
 
     {{-- ── HASIL PENCARIAN ── --}}
@@ -92,48 +110,67 @@
 
         @forelse($results as $r)
         <div class="ticket-card">
-            <div class="ticket-card-main">
-                <div class="bus-info">
-                    <div class="bus-logo-placeholder"><i class="ph ph-bus"></i></div>
-                    <div>
-                        <div class="bus-name">{{ $r->nama_bus }}</div>
-                        <div class="bus-class">{{ $r->kelas }}</div>
+            <div class="ticket-card-body">
+                <div class="ticket-card-main">
+                    <div class="bus-info">
+                        <div class="bus-logo-placeholder">
+                            @if($r->gambar ?? false)
+                                <img src="{{ asset('storage/'.$r->gambar) }}" alt="{{ $r->nama_bus }}" style="width:100%; height:100%; object-fit:cover; border-radius:8px;">
+                            @else
+                                <i class="ph ph-bus"></i>
+                            @endif
+                        </div>
+                        <div>
+                            <div class="bus-name">{{ $r->nama_bus }}</div>
+                            <div class="bus-class">{{ $r->kelas }}</div>
+                        </div>
+                    </div>
+
+                    <div class="journey-info">
+                        <div class="journey-time">
+                            <span class="time">{{ \Carbon\Carbon::parse($r->jam_berangkat)->format('H:i') }}</span>
+                            <span class="city-code">{{ strtoupper(substr($r->kota_asal, 0, 3)) }}</span>
+                        </div>
+                        <div class="journey-line">
+                            <div class="journey-duration">10j 00m</div>
+                            <div class="journey-dot-line"><span></span><i class="ph ph-circle-fill" style="font-size:0.5rem;"></i><span></span></div>
+                            <div style="font-size: 0.65rem; color: var(--text-muted); margin-top:4px; font-weight:600; letter-spacing:0.5px;">LANGSUNG</div>
+                        </div>
+                        <div class="journey-time text-right">
+                            <span class="time">{{ \Carbon\Carbon::parse($r->jam_berangkat)->addHours(10)->format('H:i') }}</span>
+                            <span class="city-code">{{ strtoupper(substr($r->kota_tujuan, 0, 3)) }}</span>
+                        </div>
+                    </div>
+
+                    <div class="facilities-tags">
+                        @foreach(array_slice(explode(',', $r->fasilitas), 0, 3) as $fas)
+                            <span class="fac-tag">{{ strtoupper(trim($fas)) }}</span>
+                        @endforeach
                     </div>
                 </div>
 
-                <div class="journey-info">
-                    <div class="journey-time">
-                        <span class="time">{{ \Carbon\Carbon::parse($r->jam_berangkat)->format('H:i') }}</span>
-                        <span class="city-code">{{ strtoupper(substr($r->kota_asal, 0, 3)) }}</span>
+                <div class="ticket-card-right">
+                    <div class="price-block">
+                        <div style="text-decoration: line-through; color: var(--text-muted); font-size: 0.85rem; text-align: right; margin-bottom: 2px;">Rp {{ number_format($r->harga + 35000, 0, ',', '.') }}</div>
+                        <div class="price-amount">IDR {{ number_format($r->harga, 0, ',', '.') }}</div>
+                        <div class="price-per" style="text-align: right;">Hemat 10% hari ini</div>
                     </div>
-                    <div class="journey-line">
-                        <div class="journey-duration">— LANGSUNG —</div>
-                        <div class="journey-dot-line"><span></span><i class="ph ph-bus-fill"></i><span></span></div>
-                    </div>
-                    <div class="journey-time text-right">
-                        <span class="time">—</span>
-                        <span class="city-code">{{ strtoupper(substr($r->kota_tujuan, 0, 3)) }}</span>
-                    </div>
-                </div>
-
-                <div class="facilities-tags">
-                    @foreach(array_slice(explode(',', $r->fasilitas), 0, 3) as $fas)
-                        <span class="fac-tag">{{ strtoupper(trim($fas)) }}</span>
-                    @endforeach
+                    <a href="{{ route('booking.seat', ['jadwal_id' => $r->id_jadwal]) }}" class="btn btn-primary btn-block">Pilih Kursi</a>
                 </div>
             </div>
-
-            <div class="ticket-card-right">
-                <div class="price-block">
-                    <div class="price-amount">IDR {{ number_format($r->harga, 0, ',', '.') }}</div>
-                    <div class="price-per">Harga per orang</div>
+            
+            <div class="ticket-card-footer">
+                <div class="footer-links">
+                    <a href="#">Detail Rute</a>
+                    <a href="#">Detail Bus</a>
                 </div>
-                <a href="{{ route('booking.seat', ['jadwal_id' => $r->id_jadwal]) }}" class="btn btn-primary btn-block">Pilih Kursi</a>
-                @if($r->kursi_tersedia <= 5)
-                <div class="seats-warning"><i class="ph ph-fire"></i> Sisa {{ $r->kursi_tersedia }} Kursi!!</div>
-                @else
-                <div class="seats-available"><i class="ph ph-chair"></i> {{ $r->kursi_tersedia }} Kursi tersedia</div>
-                @endif
+                <div class="footer-status">
+                    @if($r->kursi_tersedia <= 5)
+                        <span class="seats-warning"><i class="ph ph-lightning"></i> Sisa {{ $r->kursi_tersedia }} Kursi!</span>
+                    @else
+                        <span class="seats-available"><i class="ph ph-chair"></i> {{ $r->kursi_tersedia }} Kursi tersedia</span>
+                    @endif
+                </div>
             </div>
         </div>
         @empty

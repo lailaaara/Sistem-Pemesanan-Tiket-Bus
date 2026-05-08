@@ -8,20 +8,20 @@
     <div class="laporan-stat-card">
         <div class="laporan-stat-icon" style="background:#e6f7f0;color:var(--primary);"><i class="ph ph-wallet"></i></div>
         <div class="laporan-stat-label">Total Pendapatan</div>
-        <div class="laporan-stat-value">Rp 482.500.000</div>
-        <div class="laporan-stat-change up" style="color:var(--primary);">↗ 12.5% dari bulan lalu</div>
+        <div class="laporan-stat-value">Rp {{ number_format($totalPendapatan, 0, ',', '.') }}</div>
+        <div class="laporan-stat-change up" style="color:var(--primary);">↗ Total seluruhnya</div>
     </div>
     <div class="laporan-stat-card">
         <div class="laporan-stat-icon" style="background:#e6f0ff;color:#3b82f6;"><i class="ph ph-receipt"></i></div>
         <div class="laporan-stat-label">Total Transaksi</div>
-        <div class="laporan-stat-value">3,248</div>
-        <div class="laporan-stat-change up" style="color:var(--primary);">↗ 8.2% dari bulan lalu</div>
+        <div class="laporan-stat-value">{{ number_format($totalTransaksi, 0, ',', '.') }}</div>
+        <div class="laporan-stat-change up" style="color:var(--primary);">↗ Transaksi berhasil</div>
     </div>
     <div class="laporan-stat-card">
         <div class="laporan-stat-icon" style="background:#fef3e6;color:#f59e0b;"><i class="ph ph-ticket"></i></div>
         <div class="laporan-stat-label">Total Tiket Terjual</div>
-        <div class="laporan-stat-value">12,890</div>
-        <div class="laporan-stat-change down" style="color:#ef4444;">↘ 2.4% dari bulan lalu</div>
+        <div class="laporan-stat-value">{{ number_format($totalTiket, 0, ',', '.') }}</div>
+        <div class="laporan-stat-change up" style="color:var(--primary);">↗ Tiket terkonfirmasi</div>
     </div>
 </div>
 

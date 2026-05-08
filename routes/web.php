@@ -12,14 +12,20 @@ Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/search',            [BookingController::class, 'search'])->name('booking.search');
 Route::get('/booking/seat',      [BookingController::class, 'seat'])->name('booking.seat');
 Route::get('/booking/checkout',  [BookingController::class, 'checkout'])->name('booking.checkout');
+Route::post('/booking/process',  [BookingController::class, 'process'])->name('booking.process');
 Route::get('/booking/success',   [BookingController::class, 'success'])->name('booking.success');
 
 // ─── Kelola Tiket Saya (Fase 3) ───────────────────────────────────────
 Route::get('/tickets',           [BookingController::class, 'ticketsIndex'])->name('booking.tickets');
 Route::get('/tickets/{id}',      [BookingController::class, 'ticketsDetail'])->name('booking.tickets_detail');
 
+// ─── Autentikasi (Admin Login) ──────────────────────────────────────────
+Route::get('/login',             [\App\Http\Controllers\AuthController::class, 'showLogin'])->name('login');
+Route::post('/login',            [\App\Http\Controllers\AuthController::class, 'login'])->name('login.post');
+Route::post('/logout',           [\App\Http\Controllers\AuthController::class, 'logout'])->name('logout');
+
 // ─── Panel Admin (Fase 4) ─────────────────────────────────────────────
-Route::prefix('admin')->group(function () {
+Route::middleware('auth')->prefix('admin')->group(function () {
     Route::get('/',              [AdminController::class, 'dashboard'])->name('admin.dashboard');
     Route::get('/operasional',   [AdminController::class, 'operasional'])->name('admin.operasional');
     Route::get('/operasional/tambah', [AdminController::class, 'tambahJadwal'])->name('admin.tambah_jadwal');

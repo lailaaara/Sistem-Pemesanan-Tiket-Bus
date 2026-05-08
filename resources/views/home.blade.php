@@ -67,36 +67,46 @@
     </section>
 
     {{-- Popular Routes --}}
-    <section class="section">
+    <section class="section" id="rute">
         <div class="section-header">
-            <h2 class="section-title">Rute Terpopuler</h2>
-            <p class="section-subtitle">Pilihan rute yang paling sering dipesan oleh traveler.</p>
+            <div>
+                <h2 class="section-title">Rute Terpopuler</h2>
+                <p class="section-subtitle">Pilihan rute yang paling sering dipesan oleh traveler.</p>
+            </div>
+            <a href="#" class="section-header-link">Lihat Semua Rute →</a>
         </div>
 
-        <div class="routes-grid">
-            @foreach($popularRoutes as $route)
-            <div class="route-card">
-                <div class="route-img-wrapper">
-                    <div class="route-badge">FAVORITE</div>
-                    @php
-                        $imgSrc = asset('images/hero_bus_bg.png');
-                        if(str_contains($route->gambar ?? '', 'http')) {
-                            $imgSrc = $route->gambar;
-                        } elseif ($route->gambar) {
-                            $imgSrc = asset('storage/' . $route->gambar);
-                        }
-                    @endphp
-                    <img src="{{ $imgSrc }}" alt="{{ $route->kota_asal }} - {{ $route->kota_tujuan }}" class="route-img">
-                </div>
-                <div class="route-content">
-                    <h3 class="route-title">{{ $route->kota_asal }} &mdash; {{ $route->kota_tujuan }}</h3>
-                    <div style="display:flex; justify-content:space-between; align-items:flex-end;">
-                        <span style="font-size:0.9rem; opacity:0.9;"><i class="ph ph-clock"></i> Mulai dari 3 Jam</span>
-                        <div class="route-price">IDR {{ number_format($route->harga_mulai, 0, ',', '.') }}</div>
+        <div class="routes-bento">
+            {{-- Large Card: Jakarta — Bandung --}}
+            <div class="route-card large">
+                <img src="{{ asset('images/rute_jakarta_bandung.png') }}" alt="Jakarta - Bandung" class="route-img">
+                <div class="route-badge">FAVORITE</div>
+                <div class="route-overlay">
+                    <div class="route-title">Jakarta — Bandung</div>
+                    <div class="route-meta">
+                        <span><i class="ph ph-clock"></i> Mulai dari 3 Jam</span>
+                        <span class="route-price"><i class="ph ph-coins"></i> IDR 120.000</span>
                     </div>
                 </div>
             </div>
-            @endforeach
+
+            {{-- Small Card: Surabaya — Malang --}}
+            <div class="route-card small">
+                <img src="{{ asset('images/rute_surabaya_malang.png') }}" alt="Surabaya - Malang" class="route-img">
+                <div class="route-overlay">
+                    <div class="route-title">Surabaya — Malang</div>
+                    <div class="route-price">IDR 85.000</div>
+                </div>
+            </div>
+
+            {{-- Small Card: Bali — Surabaya --}}
+            <div class="route-card small">
+                <img src="{{ asset('images/rute_bali_surabaya.png') }}" alt="Bali - Surabaya" class="route-img">
+                <div class="route-overlay">
+                    <div class="route-title">Bali — Surabaya</div>
+                    <div class="route-price">IDR 250.000</div>
+                </div>
+            </div>
         </div>
     </section>
 

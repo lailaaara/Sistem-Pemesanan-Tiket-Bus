@@ -19,23 +19,23 @@
 
         <div class="nav-links">
             <a href="/" class="nav-link {{ request()->is('/') ? 'active' : '' }}">Cari Tiket</a>
-            <a href="/tickets" class="nav-link {{ request()->is('tickets*') ? 'active' : '' }}">Tiket Saya</a>
-            <a href="#" class="nav-link">Bantuan</a>
+            <a href="#rute" class="nav-link">Rute</a>
+            <a href="#" class="nav-link">Informasi</a>
         </div>
 
-        <!-- State: Belum Login -->
-        <div class="nav-actions" id="navGuest">
-            <button onclick="openModal('modalLogin')" class="btn btn-outline">Masuk</button>
-            <button onclick="openModal('modalRegister')" class="btn btn-primary">Daftar</button>
+        <div class="nav-actions">
+            @auth
+                <a href="{{ route('admin.dashboard') }}" class="btn btn-outline" style="border-color: var(--primary); color: var(--primary);">Dashboard Admin</a>
+                <form action="{{ route('logout') }}" method="POST" style="display:inline;">
+                    @csrf
+                    <button type="submit" class="btn btn-primary" style="padding: 0.5rem 1rem;">Logout</button>
+                </form>
+            @else
+                <a href="{{ route('login') }}" class="btn btn-outline" style="border-color: transparent; color: var(--text-muted); font-size: 0.85rem;">
+                    <i class="ph ph-shield-check"></i> Admin
+                </a>
+            @endauth
         </div>
-
-        <!-- State: Sudah Login (tersembunyi by default) -->
-        <div class="nav-actions" id="navUser" style="display:none; position:relative;">
-            <button class="user-avatar-btn" onclick="toggleDropdown()" id="avatarBtn">
-                <span class="user-avatar-icon"><i class="ph ph-user-circle-fill"></i></span>
-                <span class="user-avatar-name" id="navUserName">Anak Undip</span>
-                <i class="ph ph-caret-down" style="font-size:0.85rem;"></i>
-            </button>
             <!-- Dropdown Profil -->
             <div class="profile-dropdown" id="profileDropdown" style="display:none;">
                 <div class="profile-dropdown-header">

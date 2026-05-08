@@ -90,22 +90,142 @@ class BookingController extends Controller
     }
 
     /**
+     * Proses form checkout.
+     */
+    public function process(Request $request)
+    {
+        $request->validate([
+            'nama_penumpang' => 'required|string',
+            'no_identitas'   => 'required|string',
+            'no_hp'          => 'required|string',
+            'email'          => 'nullable|email',
+            'jadwal_id'      => 'required|integer',
+            'kursi'          => 'required|string',
+            'total_harga'    => 'required|numeric'
+        ]);
+
+        $jadwalId = $request->input('jadwal_id');
+        $kursiArray = explode(',', $request->input('kursi'));
+        $jumlahKursi = count($kursiArray);
+        $totalHarga = $request->input('total_harga');
+
+        $jadwal = DB::table('jadwal')->where('id_jadwal', $jadwalId)->first();
+        if (!$jadwal) {
+            return redirect()->back()->with('error', 'Jadwal tidak ditemukan');
+        }
+
+        DB::beginTransaction();
+        try {
+            // 1. Insert Pemesanan
+            $kodeBooking = 'LJB-' . strtoupper(substr(uniqid(), -6));
+            $pemesananId = DB::table('pemesanan_pembayaran')->insertGetId([
+                'jadwal_id' => $jadwalId,
+                'kode_booking' => $kodeBooking,
+                'tanggal_pemesanan' => now(),
+                'jumlah_kursi' => $jumlahKursi,
+                'total_harga' => $totalHarga,
+                'metode_pembayaran' => $request->input('metode_pembayaran', 'va'),
+                'tanggal_bayar' => now(),
+                'status_pembayaran' => 'lunas'
+            ], 'pemesanan_id');
+
+            // 2. Insert Tiket untuk setiap kursi
+            foreach ($kursiArray as $noKursi) {
+                $noKursi = trim($noKursi);
+                
+                // Cari atau buat id_kursi di tabel kursi
+                $kursi = DB::table('kursi')
+                    ->where('id_bus', $jadwal->bus_id)
+                    ->where('no_kursi', $noKursi)
+                    ->first();
+                    
+                if ($kursi) {
+                    $idKursi = $kursi->id_kursi;
+                } else {
+                    $idKursi = DB::table('kursi')->insertGetId([
+                        'id_bus' => $jadwal->bus_id,
+                        'no_kursi' => $noKursi
+                    ], 'id_kursi');
+                }
+
+                DB::table('tiket')->insert([
+                    'pemesanan_id' => $pemesananId,
+                    'id_kursi' => $idKursi,
+                    'kode_tiket' => $kodeBooking . '-' . $noKursi,
+                    'status_tiket' => 'aktif',
+                    'nama_penumpang' => $request->input('nama_penumpang'),
+                    'no_hp' => $request->input('no_hp'),
+                    'no_identitas' => $request->input('no_identitas')
+                ]);
+            }
+
+            // 3. Kurangi kursi tersedia di jadwal
+            if ($jadwal->kursi_tersedia >= $jumlahKursi) {
+                DB::table('jadwal')
+                    ->where('id_jadwal', $jadwalId)
+                    ->decrement('kursi_tersedia', $jumlahKursi);
+            }
+
+            DB::commit();
+
+            return redirect()->route('booking.success', ['kode' => $kodeBooking]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
+        }
+    }
+
+    /**
      * Halaman pembayaran berhasil.
      */
     public function success(Request $request)
     {
-        // Data dummy — nanti diganti dari session/DB setelah proses pembayaran
+        $kodeBooking = $request->input('kode');
+        
+        $pemesanan = DB::table('pemesanan_pembayaran as p')
+            ->join('jadwal as j', 'p.jadwal_id', '=', 'j.id_jadwal')
+            ->join('bus as b', 'j.bus_id', '=', 'b.bus_id')
+            ->join('rute as r', 'j.rute_id', '=', 'r.rute_id')
+            ->where('p.kode_booking', $kodeBooking)
+            ->select('p.*', 'j.tanggal_berangkat', 'j.jam_berangkat', 'b.nama_bus', 'b.kelas', 'r.kota_asal', 'r.kota_tujuan')
+            ->first();
+
+        if (!$pemesanan) {
+            // Fallback ke dummy jika tidak ditemukan
+            $booking = (object)[
+                'kode_booking'    => $kodeBooking ?: 'LJB992834',
+                'nama_penumpang'  => 'Anak Undip',
+                'no_kursi'        => '2A',
+                'kota_asal'       => 'Jakarta',
+                'terminal_asal'   => 'Terminal Pulo Gebang',
+                'kota_tujuan'     => 'Surabaya',
+                'terminal_tujuan' => 'Terminal Bungurasih',
+                'tanggal'         => '27 Mei 2026, 08:30 WIB',
+                'nama_bus'        => 'LajuBus',
+                'kelas'           => 'Executive',
+            ];
+            return view('booking.success', compact('booking'));
+        }
+
+        $tiketList = DB::table('tiket as t')
+            ->join('kursi as k', 't.id_kursi', '=', 'k.id_kursi')
+            ->where('t.pemesanan_id', $pemesanan->pemesanan_id)
+            ->get();
+
+        $kursiNos = $tiketList->pluck('no_kursi')->implode(', ');
+        $penumpang = $tiketList->first()->nama_penumpang ?? 'Anonim';
+
         $booking = (object)[
-            'kode_booking'    => $request->input('kode', 'LJB992834'),
-            'nama_penumpang'  => 'Anak Undip',
-            'no_kursi'        => '2A',
-            'kota_asal'       => 'Jakarta',
-            'terminal_asal'   => 'Terminal Pulo Gebang',
-            'kota_tujuan'     => 'Surabaya',
-            'terminal_tujuan' => 'Terminal Bungurasih',
-            'tanggal'         => '27 Mei 2026, 08:30 WIB',
-            'nama_bus'        => 'LajuBus',
-            'kelas'           => 'Executive',
+            'kode_booking'    => $pemesanan->kode_booking,
+            'nama_penumpang'  => $penumpang,
+            'no_kursi'        => $kursiNos,
+            'kota_asal'       => $pemesanan->kota_asal,
+            'terminal_asal'   => 'Terminal ' . $pemesanan->kota_asal,
+            'kota_tujuan'     => $pemesanan->kota_tujuan,
+            'terminal_tujuan' => 'Terminal ' . $pemesanan->kota_tujuan,
+            'tanggal'         => \Carbon\Carbon::parse($pemesanan->tanggal_berangkat)->isoFormat('D MMM YYYY') . ', ' . \Carbon\Carbon::parse($pemesanan->jam_berangkat)->format('H:i') . ' WIB',
+            'nama_bus'        => $pemesanan->nama_bus,
+            'kelas'           => $pemesanan->kelas,
         ];
 
         return view('booking.success', compact('booking'));

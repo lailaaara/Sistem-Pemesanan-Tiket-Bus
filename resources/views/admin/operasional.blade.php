@@ -33,7 +33,7 @@
         <div class="ops-ticket-icon"><i class="ph ph-ticket"></i></div>
         <div class="ops-ticket-label">Tiket Terjual</div>
         <div class="ops-ticket-sub">Update real-time aplikasi</div>
-        <div class="ops-ticket-value">1,248</div>
+        <div class="ops-ticket-value">{{ number_format($tiketHariIni, 0, ',', '.') }}</div>
         <div class="ops-ticket-unit">TOTAL TIKET HARI INI</div>
     </div>
 </div>

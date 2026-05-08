@@ -9,16 +9,16 @@
         <div class="trx-summary-icon"><i class="ph ph-wallet"></i></div>
         <div>
             <div class="trx-summary-label">TOTAL PENDAPATAN</div>
-            <div class="trx-summary-value">Rp 42.850.000</div>
-            <div class="trx-summary-change">↗ +12.5% vs kemarin</div>
+            <div class="trx-summary-value">Rp {{ number_format($totalPendapatan, 0, ',', '.') }}</div>
+            <div class="trx-summary-change">↗ Total seluruhnya</div>
         </div>
     </div>
     <div class="trx-summary-card">
         <div class="trx-summary-icon"><i class="ph ph-ticket"></i></div>
         <div>
             <div class="trx-summary-label">TIKET TERJUAL</div>
-            <div class="trx-summary-value">158 Tiket</div>
-            <div class="trx-summary-sub"><i class="ph ph-calendar"></i> Jumat, 24 Mei 2024</div>
+            <div class="trx-summary-value">{{ number_format($tiketTerjual, 0, ',', '.') }} Tiket</div>
+            <div class="trx-summary-sub"><i class="ph ph-calendar"></i> Update Real-time</div>
         </div>
     </div>
 </div>
