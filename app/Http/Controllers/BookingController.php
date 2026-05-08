@@ -110,4 +110,98 @@ class BookingController extends Controller
 
         return view('booking.success', compact('booking'));
     }
+
+    /**
+     * Halaman Kelola Tiket Perjalanan (Tiket Saya).
+     */
+    public function ticketsIndex(Request $request)
+    {
+        // Data Mock Tiket Sesuai Desain Referensi
+        $activeTickets = [
+            (object)[
+                'id' => 1,
+                'kode_booking' => 'LJB-992834',
+                'nama_bus' => 'LajuBus',
+                'kelas' => 'Eksekutif',
+                'no_kursi' => '2A',
+                'kota_asal' => 'Jakarta',
+                'tanggal_berangkat' => '27 Mei 2026',
+                'jam_berangkat' => '08:30 WIB',
+                'kota_tujuan' => 'Surabaya',
+                'jam_tiba' => '18:45 WIB',
+                'status' => 'Menunggu Keberangkatan',
+                'status_class' => 'status-pending'
+            ]
+        ];
+
+        $pastTickets = [
+            (object)[
+                'id' => 2,
+                'kode_booking' => 'LJB-883719',
+                'nama_bus' => 'LajuBus',
+                'kelas' => 'Eksekutif',
+                'no_kursi' => '4B',
+                'kota_asal' => 'Semarang',
+                'tanggal_berangkat' => '20 Okt 2023',
+                'jam_berangkat' => '19:00 WIB',
+                'kota_tujuan' => 'Jakarta',
+                'jam_tiba' => '03:15 WIB',
+                'status' => 'Selesai',
+                'status_class' => 'status-success'
+            ],
+            (object)[
+                'id' => 3,
+                'kode_booking' => 'LJB-771822',
+                'nama_bus' => 'LajuBus',
+                'kelas' => 'Eksekutif',
+                'no_kursi' => '12A',
+                'kota_asal' => 'Semarang',
+                'tanggal_berangkat' => '20 Okt 2023',
+                'jam_berangkat' => '19:00 WIB',
+                'kota_tujuan' => 'Jakarta',
+                'jam_tiba' => '03:15 WIB',
+                'status' => 'Selesai',
+                'status_class' => 'status-success'
+            ]
+        ];
+
+        return view('booking.tickets_index', compact('activeTickets', 'pastTickets'));
+    }
+
+    /**
+     * Halaman Detail Tiket Perjalanan.
+     */
+    public function ticketsDetail($id)
+    {
+        // Mock data untuk detail tiket LJB-992834
+        $ticket = (object)[
+            'id' => $id,
+            'kode_booking' => 'LJB-992834',
+            'status' => 'Menunggu Keberangkatan',
+            'nama_bus' => 'LajuBus Executive',
+            'no_bus' => 'LB-2045-A',
+            'jam_berangkat' => '08:30',
+            'tanggal_berangkat' => 'Senin, 27 Mei 2026',
+            'terminal_asal' => 'Terminal Pulo Gebang, Jakarta',
+            'jam_tiba' => '18:45',
+            'tanggal_tiba' => 'Senin, 27 Mei 2026',
+            'terminal_tujuan' => 'Terminal Bungurasih, Surabaya',
+            'fasilitas' => ['Wiai', 'AC', 'Leg Rest'], // 'Wiai' match typo in user screenshot "Wiai"
+            'penumpang' => [
+                (object)[
+                    'nama' => 'siapa ya namanya',
+                    'no_kursi' => '2A',
+                    'tipe_bus' => 'Executive',
+                    'status' => 'Terkonfirmasi'
+                ]
+            ],
+            'harga_tiket' => 300000,
+            'biaya_layanan' => 5000,
+            'total_bayar' => 305000,
+            'info_pembayaran' => 'Pembayaran berhasil menggunakan Transfer Bank BCA pada 26 Mei 2026, 14:00 WIB.'
+        ];
+
+        return view('booking.tickets_detail', compact('ticket'));
+    }
 }
+
