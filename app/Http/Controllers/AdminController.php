@@ -82,6 +82,7 @@ class AdminController extends Controller
     public function operasional()
     {
         $jadwalDB = DB::table('jadwal as j')
+            ->whereNull('j.deleted_at')
             ->join('bus as b', 'j.bus_id', '=', 'b.bus_id')
             ->join('rute as r', 'j.rute_id', '=', 'r.rute_id')
             ->select('j.*', 'b.nama_bus', 'b.kapasitas', 'r.kota_asal', 'r.kota_tujuan')
@@ -102,6 +103,29 @@ class AdminController extends Controller
             ];
         });
 
+        $busList = Bus::all();
+
+        $trashedJadwalDB = DB::table('jadwal as j')
+            ->whereNotNull('j.deleted_at')
+            ->join('bus as b', 'j.bus_id', '=', 'b.bus_id')
+            ->join('rute as r', 'j.rute_id', '=', 'r.rute_id')
+            ->select('j.*', 'b.nama_bus', 'b.kapasitas', 'r.kota_asal', 'r.kota_tujuan')
+            ->orderBy('j.deleted_at', 'desc')
+            ->get();
+
+        $trashedJadwalList = $trashedJadwalDB->map(function($j) {
+            return (object)[
+                'id' => 'SCH-' . $j->id_jadwal,
+                'id_jadwal' => $j->id_jadwal,
+                'armada' => $j->nama_bus,
+                'rute' => $j->kota_asal . ' — ' . $j->kota_tujuan,
+                'waktu' => Carbon::parse($j->tanggal_berangkat)->isoFormat('D MMM YYYY') . ' ' . Carbon::parse($j->jam_berangkat)->format('H:i') . ' WIB',
+                'deleted_at' => Carbon::parse($j->deleted_at)->isoFormat('D MMM YYYY H:mm'),
+            ];
+        });
+
+        $trashedBusList = Bus::onlyTrashed()->get();
+
         $statusArmada = [
             (object)['label' => 'JADWAL AKTIF', 'value' => $jadwalDB->where('status_jadwal', 'aktif')->count(), 'change' => 'Sedang/Akan Berjalan', 'color' => 'green'],
             (object)['label' => 'JADWAL SELESAI', 'value' => $jadwalDB->where('status_jadwal', 'selesai')->count(), 'change' => 'Selesai', 'color' => 'blue'],
@@ -113,7 +137,7 @@ class AdminController extends Controller
             ->whereDate('p.tanggal_pemesanan', Carbon::today())
             ->count();
 
-        return view('admin.operasional', compact('statusArmada', 'jadwalList', 'tiketHariIni'));
+        return view('admin.operasional', compact('statusArmada', 'jadwalList', 'busList', 'trashedJadwalList', 'trashedBusList', 'tiketHariIni'));
     }
 
     /**
