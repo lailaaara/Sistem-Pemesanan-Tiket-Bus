@@ -28,8 +28,28 @@ Route::post('/logout',           [\App\Http\Controllers\AuthController::class, '
 // ─── Panel Admin (Fase 4) ─────────────────────────────────────────────
 Route::middleware('auth')->prefix('admin')->group(function () {
     Route::get('/',              [AdminController::class, 'dashboard'])->name('admin.dashboard');
+    
+    // ─── Operasional (Bus & Jadwal)
     Route::get('/operasional',   [AdminController::class, 'operasional'])->name('admin.operasional');
-    Route::get('/operasional/tambah', [AdminController::class, 'tambahJadwal'])->name('admin.tambah_jadwal');
+    
+    // ─── Bus Routes
+    Route::get('/operasional/tambah-bus', [AdminController::class, 'tambahBus'])->name('admin.tambah_bus');
+    Route::post('/operasional/store-bus', [AdminController::class, 'storeBus'])->name('admin.store_bus');
+    Route::get('/operasional/edit-bus/{id}', [AdminController::class, 'editBus'])->name('admin.edit_bus');
+    Route::put('/operasional/update-bus/{id}', [AdminController::class, 'updateBus'])->name('admin.update_bus');
+    Route::delete('/operasional/delete-bus/{id}', [AdminController::class, 'destroyBus'])->name('admin.destroy_bus');
+    Route::delete('/operasional/force-delete-bus/{id}', [AdminController::class, 'forceDestroyBus'])->name('admin.force_destroy_bus');
+    Route::post('/operasional/restore-bus/{id}', [AdminController::class, 'restoreBus'])->name('admin.restore_bus');
+    
+    // ─── Jadwal Routes
+    Route::get('/operasional/tambah-jadwal', [AdminController::class, 'tambahJadwal'])->name('admin.tambah_jadwal');
+    Route::post('/operasional/store-jadwal', [AdminController::class, 'storeJadwal'])->name('admin.store_jadwal');
+    Route::get('/operasional/edit-jadwal/{id}', [AdminController::class, 'editJadwal'])->name('admin.edit_jadwal');
+    Route::put('/operasional/update-jadwal/{id}', [AdminController::class, 'updateJadwal'])->name('admin.update_jadwal');
+    Route::delete('/operasional/delete-jadwal/{id}', [AdminController::class, 'destroyJadwal'])->name('admin.destroy_jadwal');
+    Route::delete('/operasional/force-delete-jadwal/{id}', [AdminController::class, 'forceDestroyJadwal'])->name('admin.force_destroy_jadwal');
+    Route::post('/operasional/restore-jadwal/{id}', [AdminController::class, 'restoreJadwal'])->name('admin.restore_jadwal');
+    
     Route::get('/transaksi',     [AdminController::class, 'transaksi'])->name('admin.transaksi');
     Route::get('/laporan',       [AdminController::class, 'laporan'])->name('admin.laporan');
 });

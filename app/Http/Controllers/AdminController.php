@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
+use App\Models\Bus;
+use App\Models\Jadwal;
 
 class AdminController extends Controller
 {
@@ -90,6 +92,7 @@ class AdminController extends Controller
             $kapasitasTerisi = max(0, $j->kapasitas - $j->kursi_tersedia);
             return (object)[
                 'id' => 'SCH-' . $j->id_jadwal,
+                'id_jadwal' => $j->id_jadwal,
                 'armada' => $j->nama_bus,
                 'rute' => $j->kota_asal . ' — ' . $j->kota_tujuan,
                 'waktu' => Carbon::parse($j->tanggal_berangkat)->isoFormat('D MMM YYYY') . ' ' . Carbon::parse($j->jam_berangkat)->format('H:i') . ' WIB',
@@ -118,7 +121,199 @@ class AdminController extends Controller
      */
     public function tambahJadwal()
     {
-        return view('admin.tambah_jadwal');
+        $buses = DB::table('bus')->where('status_bus', 'aktif')->get();
+        $routes = DB::table('rute')->get();
+        return view('admin.tambah_jadwal', compact('buses', 'routes'));
+    }
+
+    /**
+     * Simpan Jadwal Baru
+     */
+    public function storeJadwal(Request $request)
+    {
+        $validated = $request->validate([
+            'bus_id' => 'required|integer|exists:bus,bus_id',
+            'rute_id' => 'required|integer|exists:rute,rute_id',
+            'tanggal_berangkat' => 'required|date',
+            'jam_berangkat' => 'required|date_format:H:i',
+            'harga' => 'required|numeric|min:0',
+            'kursi_tersedia' => 'required|integer|min:1',
+        ]);
+
+        Jadwal::create([
+            'bus_id' => $validated['bus_id'],
+            'rute_id' => $validated['rute_id'],
+            'tanggal_berangkat' => $validated['tanggal_berangkat'],
+            'jam_berangkat' => $validated['jam_berangkat'],
+            'harga' => $validated['harga'],
+            'kursi_tersedia' => $validated['kursi_tersedia'],
+            'status_jadwal' => 'aktif',
+            'id_admin' => auth()->id(),
+        ]);
+
+        return redirect()->route('admin.operasional')->with('success', 'Jadwal berhasil ditambahkan!');
+    }
+
+    /**
+     * Edit Jadwal — Form edit jadwal.
+     */
+    public function editJadwal($id)
+    {
+        $jadwal = Jadwal::findOrFail($id);
+        $buses = Bus::where('status_bus', 'aktif')->get();
+        $routes = DB::table('rute')->get();
+        return view('admin.edit_jadwal', compact('jadwal', 'buses', 'routes'));
+    }
+
+    /**
+     * Update Jadwal
+     */
+    public function updateJadwal(Request $request, $id)
+    {
+        $jadwal = Jadwal::findOrFail($id);
+        
+        $validated = $request->validate([
+            'bus_id' => 'required|integer|exists:bus,bus_id',
+            'rute_id' => 'required|integer|exists:rute,rute_id',
+            'tanggal_berangkat' => 'required|date',
+            'jam_berangkat' => 'required|date_format:H:i',
+            'harga' => 'required|numeric|min:0',
+            'kursi_tersedia' => 'required|integer|min:1',
+            'status_jadwal' => 'required|string|in:aktif,selesai,batal',
+        ]);
+
+        $jadwal->update($validated);
+
+        return redirect()->route('admin.operasional')->with('success', 'Jadwal berhasil diperbarui!');
+    }
+
+    /**
+     * Soft Delete Jadwal
+     */
+    public function destroyJadwal($id)
+    {
+        $jadwal = Jadwal::findOrFail($id);
+        $jadwal->delete();
+
+        return redirect()->route('admin.operasional')->with('success', 'Jadwal berhasil dihapus!');
+    }
+
+    /**
+     * Force Delete Jadwal (Permanent)
+     */
+    public function forceDestroyJadwal($id)
+    {
+        $jadwal = Jadwal::withTrashed()->findOrFail($id);
+        $jadwal->forceDelete();
+
+        return redirect()->route('admin.operasional')->with('success', 'Jadwal berhasil dihapus permanen!');
+    }
+
+    /**
+     * Restore Jadwal (Undo Soft Delete)
+     */
+    public function restoreJadwal($id)
+    {
+        $jadwal = Jadwal::withTrashed()->findOrFail($id);
+        $jadwal->restore();
+
+        return redirect()->route('admin.operasional')->with('success', 'Jadwal berhasil dipulihkan!');
+    }
+
+    /**
+     * Tambah Bus Baru — Form pembuatan armada.
+     */
+    public function tambahBus()
+    {
+        return view('admin.tambah_bus');
+    }
+
+    /**
+     * Simpan Bus Baru
+     */
+    public function storeBus(Request $request)
+    {
+        $validated = $request->validate([
+            'no_polisi' => 'required|string|unique:bus,no_polisi',
+            'nama_bus' => 'required|string',
+            'kapasitas' => 'required|integer|min:1',
+            'kelas' => 'required|string|in:Eksekutif,Ekonomi,Patas',
+            'fasilitas' => 'nullable|string',
+        ]);
+
+        Bus::create([
+            'no_polisi' => $validated['no_polisi'],
+            'nama_bus' => $validated['nama_bus'],
+            'kapasitas' => $validated['kapasitas'],
+            'status_bus' => 'aktif',
+            'kelas' => $validated['kelas'],
+            'fasilitas' => $validated['fasilitas'] ?? 'AC,WiFi',
+        ]);
+
+        return redirect()->route('admin.operasional')->with('success', 'Bus berhasil ditambahkan!');
+    }
+
+    /**
+     * Edit Bus — Form edit armada.
+     */
+    public function editBus($id)
+    {
+        $bus = Bus::findOrFail($id);
+        return view('admin.edit_bus', compact('bus'));
+    }
+
+    /**
+     * Update Bus
+     */
+    public function updateBus(Request $request, $id)
+    {
+        $bus = Bus::findOrFail($id);
+        
+        $validated = $request->validate([
+            'no_polisi' => 'required|string|unique:bus,no_polisi,' . $id . ',bus_id',
+            'nama_bus' => 'required|string',
+            'kapasitas' => 'required|integer|min:1',
+            'kelas' => 'required|string|in:Eksekutif,Ekonomi,Patas',
+            'status_bus' => 'required|string|in:aktif,maintenance',
+            'fasilitas' => 'nullable|string',
+        ]);
+
+        $bus->update($validated);
+
+        return redirect()->route('admin.operasional')->with('success', 'Bus berhasil diperbarui!');
+    }
+
+    /**
+     * Soft Delete Bus
+     */
+    public function destroyBus($id)
+    {
+        $bus = Bus::findOrFail($id);
+        $bus->delete();
+
+        return redirect()->route('admin.operasional')->with('success', 'Bus berhasil dihapus!');
+    }
+
+    /**
+     * Force Delete Bus (Permanent)
+     */
+    public function forceDestroyBus($id)
+    {
+        $bus = Bus::withTrashed()->findOrFail($id);
+        $bus->forceDelete();
+
+        return redirect()->route('admin.operasional')->with('success', 'Bus berhasil dihapus permanen!');
+    }
+
+    /**
+     * Restore Bus (Undo Soft Delete)
+     */
+    public function restoreBus($id)
+    {
+        $bus = Bus::withTrashed()->findOrFail($id);
+        $bus->restore();
+
+        return redirect()->route('admin.operasional')->with('success', 'Bus berhasil dipulihkan!');
     }
 
     /**

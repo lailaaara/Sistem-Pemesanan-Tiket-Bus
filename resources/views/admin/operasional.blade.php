@@ -2,12 +2,19 @@
 @section('title', 'Manajemen Operasional - BusMania')
 
 @section('content')
+@if (session('success'))
+    <div style="background-color: #d4edda; border: 1px solid #c3e6cb; color: #155724; padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem;">
+        <i class="ph ph-check-circle"></i> {{ session('success') }}
+    </div>
+@endif
+
 <div class="admin-page-header">
     <div>
         <h1 class="admin-page-title">Manajemen Operasional</h1>
         <p class="admin-page-subtitle">Kelola seluruh jadwal keberangkatan bus, pengaturan armada, dan pemantauan status operasional harian armada LajuBus secara real-time.</p>
     </div>
     <div class="admin-header-actions">
+        <a href="{{ route('admin.tambah_bus') }}" class="btn-admin-cancel" style="margin-right:0.5rem;"><i class="ph ph-plus"></i> Tambah Bus</a>
         <a href="{{ route('admin.tambah_jadwal') }}" class="btn-admin-save"><i class="ph ph-plus"></i> Tambah Jadwal Baru</a>
     </div>
 </div>
@@ -66,7 +73,7 @@
                 $badgeClass = $j->status === 'AKTIF' ? 'badge-success' : ($j->status === 'SELESAI' ? 'badge-done' : 'badge-failed');
             @endphp
             <tr>
-                <td class="td-id">#{{ $j->id }}</td>
+                <td class="td-id">{{ $j->id }}</td>
                 <td>
                     <div style="display:flex;align-items:center;gap:0.5rem;">
                         <i class="ph ph-bus" style="font-size:1.1rem;color:var(--primary);"></i>
@@ -84,7 +91,14 @@
                     </div>
                 </td>
                 <td><span class="badge {{ $badgeClass }}">{{ $j->status }}</span></td>
-                <td><a href="#" class="action-link">Lihat Detail</a></td>
+                <td style="display:flex;gap:0.5rem;">
+                    <a href="{{ route('admin.edit_jadwal', $j->id_jadwal) }}" class="action-link" style="color:#0066ff;"><i class="ph ph-pencil"></i></a>
+                    <form action="{{ route('admin.destroy_jadwal', $j->id_jadwal) }}" method="POST" style="display:inline;" onsubmit="return confirm('Hapus jadwal ini? Bisa dipulihkan nanti.');">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="action-link" style="color:#ff6b6b;border:none;background:none;cursor:pointer;"><i class="ph ph-trash"></i></button>
+                    </form>
+                </td>
             </tr>
             @endforeach
         </tbody>
