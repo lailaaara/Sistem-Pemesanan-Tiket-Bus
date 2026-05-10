@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use App\Models\Bus;
 use App\Models\Jadwal;
+use App\Models\Rute;
 
 class AdminController extends Controller
 {
@@ -104,6 +105,7 @@ class AdminController extends Controller
         });
 
         $busList = Bus::all();
+        $ruteList = DB::table('rute')->get();
 
         $trashedJadwalDB = DB::table('jadwal as j')
             ->whereNotNull('j.deleted_at')
@@ -137,7 +139,7 @@ class AdminController extends Controller
             ->whereDate('p.tanggal_pemesanan', Carbon::today())
             ->count();
 
-        return view('admin.operasional', compact('statusArmada', 'jadwalList', 'busList', 'trashedJadwalList', 'trashedBusList', 'tiketHariIni'));
+        return view('admin.operasional', compact('statusArmada', 'jadwalList', 'busList', 'ruteList', 'trashedJadwalList', 'trashedBusList', 'tiketHariIni'));
     }
 
     /**
@@ -338,6 +340,84 @@ class AdminController extends Controller
         $bus->restore();
 
         return redirect()->route('admin.operasional')->with('success', 'Bus berhasil dipulihkan!');
+    }
+
+    /**
+     * Tambah Rute Baru — Form pembuatan rute perjalanan.
+     */
+    public function tambahRute()
+    {
+        return view('admin.tambah_rute');
+    }
+
+    /**
+     * Simpan Rute Baru
+     */
+    public function storeRute(Request $request)
+    {
+        $validated = $request->validate([
+            'kota_asal' => 'required|string|max:100',
+            'kota_tujuan' => 'required|string|max:100',
+            'jarak_km' => 'required|integer|min:1',
+        ]);
+
+        DB::table('rute')->insert([
+            'kota_asal' => $validated['kota_asal'],
+            'kota_tujuan' => $validated['kota_tujuan'],
+            'jarak_km' => $validated['jarak_km'],
+            'id_admin' => auth()->id(),
+            'gambar' => '',
+        ]);
+
+        return redirect()->route('admin.operasional')->with('success', 'Rute berhasil ditambahkan!');
+    }
+
+    /**
+     * Edit Rute — Form edit rute.
+     */
+    public function editRute($id)
+    {
+        $rute = DB::table('rute')->where('rute_id', $id)->first();
+        if (!$rute) {
+            return redirect()->route('admin.operasional')->with('error', 'Rute tidak ditemukan.');
+        }
+        return view('admin.edit_rute', compact('rute'));
+    }
+
+    /**
+     * Update Rute
+     */
+    public function updateRute(Request $request, $id)
+    {
+        $validated = $request->validate([
+            'kota_asal' => 'required|string|max:100',
+            'kota_tujuan' => 'required|string|max:100',
+            'jarak_km' => 'required|integer|min:1',
+        ]);
+
+        DB::table('rute')->where('rute_id', $id)->update([
+            'kota_asal' => $validated['kota_asal'],
+            'kota_tujuan' => $validated['kota_tujuan'],
+            'jarak_km' => $validated['jarak_km'],
+        ]);
+
+        return redirect()->route('admin.operasional')->with('success', 'Rute berhasil diperbarui!');
+    }
+
+    /**
+     * Hapus Rute (Permanent)
+     */
+    public function destroyRute($id)
+    {
+        // Cek apakah rute digunakan di jadwal
+        $jadwalCount = DB::table('jadwal')->where('rute_id', $id)->count();
+        if ($jadwalCount > 0) {
+            return redirect()->route('admin.operasional')->with('error', 'Rute tidak bisa dihapus karena masih digunakan di ' . $jadwalCount . ' jadwal.');
+        }
+
+        DB::table('rute')->where('rute_id', $id)->delete();
+
+        return redirect()->route('admin.operasional')->with('success', 'Rute berhasil dihapus!');
     }
 
     /**

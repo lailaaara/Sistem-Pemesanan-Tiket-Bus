@@ -1,0 +1,88 @@
+// ============================================
+// ERD - Sistem Pemesanan Tiket Bus
+// Gunakan di https://dbdiagram.io untuk visualisasi
+// ============================================
+
+Table users {
+  id_user int [pk, increment, note: 'Primary Key']
+  nama varchar(100)
+  email varchar(100)
+  password text
+  role varchar(10) [note: "enum: 'admin', 'user'"]
+}
+
+Table bus {
+  bus_id int [pk, increment, note: 'Primary Key']
+  no_polisi varchar(20)
+  nama_bus varchar(100)
+  kapasitas int
+  status_bus varchar(20)
+  kelas varchar(50) [default: 'Ekonomi']
+  fasilitas text [default: '']
+}
+
+Table rute {
+  rute_id int [pk, increment, note: 'Primary Key']
+  kota_asal varchar(100)
+  kota_tujuan varchar(100)
+  jarak_km int
+  id_admin int [ref: > users.id_user]
+  gambar varchar(255) [default: '']
+}
+
+Table jadwal {
+  id_jadwal int [pk, increment, note: 'Primary Key']
+  bus_id int [ref: > bus.bus_id]
+  rute_id int [ref: > rute.rute_id]
+  tanggal_berangkat date
+  jam_berangkat time
+  harga numeric(12,2)
+  kursi_tersedia int
+  status_jadwal varchar(20)
+  id_admin int [ref: > users.id_user]
+}
+
+Table pemesanan_pembayaran {
+  pemesanan_id int [pk, increment, note: 'Primary Key']
+  user_id int [null, ref: > users.id_user, note: 'Nullable - mendukung Guest Checkout']
+  jadwal_id int [ref: > jadwal.id_jadwal]
+  kode_booking varchar(50)
+  tanggal_pemesanan timestamp [default: `CURRENT_TIMESTAMP`]
+  jumlah_kursi int
+  total_harga numeric(12,2)
+  metode_pembayaran varchar(50)
+  tanggal_bayar timestamp
+  status_pembayaran varchar(20)
+}
+
+Table tiket {
+  tiket_id int [pk, increment, note: 'Primary Key']
+  pemesanan_id int [ref: > pemesanan_pembayaran.pemesanan_id]
+  id_kursi int [ref: > kursi.id_kursi]
+  kode_tiket varchar(50)
+  status_tiket varchar(20)
+  nama_penumpang varchar(100) [default: '']
+  no_hp varchar(20) [default: '']
+  no_identitas varchar(50) [default: '']
+}
+
+Table kursi {
+  id_kursi int [pk, increment, note: 'Primary Key']
+  no_kursi varchar(10)
+  id_bus int [ref: > bus.bus_id]
+}
+
+Table promo {
+  promo_id int [pk, increment, note: 'Primary Key']
+  kode_promo varchar(50) [unique]
+  deskripsi text
+  tipe_diskon varchar(20) [note: "enum: 'persen', 'nominal'"]
+  nilai_diskon numeric(12,2)
+  min_pembelian numeric(12,2) [default: 0]
+  maks_diskon numeric(12,2) [default: 0]
+  kuota int
+  terpakai int [default: 0]
+  status_promo varchar(20) [default: 'aktif']
+  berlaku_mulai date
+  berlaku_sampai date
+}

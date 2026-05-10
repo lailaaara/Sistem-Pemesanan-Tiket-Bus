@@ -7,6 +7,11 @@
         <i class="ph ph-check-circle"></i> {{ session('success') }}
     </div>
 @endif
+@if (session('error'))
+    <div style="background-color: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem;">
+        <i class="ph ph-warning-circle"></i> {{ session('error') }}
+    </div>
+@endif
 
 <div class="admin-page-header">
     <div>
@@ -14,6 +19,7 @@
         <p class="admin-page-subtitle">Kelola seluruh jadwal keberangkatan bus, pengaturan armada, dan pemantauan status operasional harian armada LajuBus secara real-time.</p>
     </div>
     <div class="admin-header-actions">
+        <a href="{{ route('admin.tambah_rute') }}" class="btn-admin-cancel" style="margin-right:0.5rem;"><i class="ph ph-plus"></i> Tambah Rute</a>
         <a href="{{ route('admin.tambah_bus') }}" class="btn-admin-cancel" style="margin-right:0.5rem;"><i class="ph ph-plus"></i> Tambah Bus</a>
         <a href="{{ route('admin.tambah_jadwal') }}" class="btn-admin-save"><i class="ph ph-plus"></i> Tambah Jadwal Baru</a>
     </div>
@@ -92,6 +98,7 @@
 <div class="ops-tabs">
     <div class="ops-tab active" onclick="switchTab('jadwal-aktif', this)">Jadwal Aktif</div>
     <div class="ops-tab" onclick="switchTab('bus-aktif', this)">Daftar Bus</div>
+    <div class="ops-tab" onclick="switchTab('rute-list', this)">Daftar Rute</div>
     <div class="ops-tab" style="color: #ff6b6b;" onclick="switchTab('sampah', this)"><i class="ph ph-trash"></i> Keranjang Sampah</div>
 </div>
 
@@ -195,6 +202,52 @@
             @endforeach
             @if($busList->isEmpty())
             <tr><td colspan="7" style="text-align:center;padding:2rem;">Belum ada armada bus.</td></tr>
+            @endif
+        </tbody>
+    </table>
+</div>
+
+{{-- Rute Table --}}
+<div id="rute-list" class="tab-content admin-card">
+    <table class="admin-table">
+        <thead>
+            <tr>
+                <th>ID Rute</th>
+                <th>Kota Asal</th>
+                <th>Kota Tujuan</th>
+                <th>Jarak (km)</th>
+                <th>Aksi</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach($ruteList as $rute)
+            <tr>
+                <td class="td-id">RTE-{{ $rute->rute_id }}</td>
+                <td>
+                    <div style="display:flex;align-items:center;gap:0.5rem;">
+                        <i class="ph ph-map-pin" style="font-size:1.1rem;color:var(--primary);"></i>
+                        <span class="td-armada">{{ $rute->kota_asal }}</span>
+                    </div>
+                </td>
+                <td>
+                    <div style="display:flex;align-items:center;gap:0.5rem;">
+                        <i class="ph ph-map-trifold" style="font-size:1.1rem;color:#20c997;"></i>
+                        <span>{{ $rute->kota_tujuan }}</span>
+                    </div>
+                </td>
+                <td>{{ number_format($rute->jarak_km, 0, ',', '.') }} km</td>
+                <td style="display:flex;gap:0.5rem;">
+                    <a href="{{ route('admin.edit_rute', $rute->rute_id) }}" class="action-link" style="color:#0066ff;" title="Edit"><i class="ph ph-pencil"></i></a>
+                    <form action="{{ route('admin.destroy_rute', $rute->rute_id) }}" method="POST" style="display:inline;" onsubmit="return confirm('Hapus rute ini? Rute yang masih digunakan jadwal tidak bisa dihapus.');">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="action-link" style="color:#ff6b6b;border:none;background:none;cursor:pointer;" title="Hapus"><i class="ph ph-trash"></i></button>
+                    </form>
+                </td>
+            </tr>
+            @endforeach
+            @if($ruteList->isEmpty())
+            <tr><td colspan="5" style="text-align:center;padding:2rem;">Belum ada data rute.</td></tr>
             @endif
         </tbody>
     </table>

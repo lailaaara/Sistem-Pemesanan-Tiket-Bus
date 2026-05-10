@@ -50,6 +50,13 @@ Route::middleware('auth')->prefix('admin')->group(function () {
     Route::delete('/operasional/force-delete-jadwal/{id}', [AdminController::class, 'forceDestroyJadwal'])->name('admin.force_destroy_jadwal');
     Route::post('/operasional/restore-jadwal/{id}', [AdminController::class, 'restoreJadwal'])->name('admin.restore_jadwal');
     
+    // ─── Rute Routes
+    Route::get('/operasional/tambah-rute', [AdminController::class, 'tambahRute'])->name('admin.tambah_rute');
+    Route::post('/operasional/store-rute', [AdminController::class, 'storeRute'])->name('admin.store_rute');
+    Route::get('/operasional/edit-rute/{id}', [AdminController::class, 'editRute'])->name('admin.edit_rute');
+    Route::put('/operasional/update-rute/{id}', [AdminController::class, 'updateRute'])->name('admin.update_rute');
+    Route::delete('/operasional/delete-rute/{id}', [AdminController::class, 'destroyRute'])->name('admin.destroy_rute');
+    
     Route::get('/transaksi',     [AdminController::class, 'transaksi'])->name('admin.transaksi');
     Route::get('/laporan',       [AdminController::class, 'laporan'])->name('admin.laporan');
 });
