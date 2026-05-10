@@ -25,10 +25,10 @@
 
         <div class="nav-actions">
             @auth
-                <a href="{{ route('admin.dashboard') }}" class="btn btn-outline" style="border-color: var(--primary); color: var(--primary);">Dashboard Admin</a>
-                <form action="{{ route('logout') }}" method="POST" style="display:inline;">
+                <a href="{{ route('admin.dashboard') }}" class="btn btn-outline" style="border-color: var(--primary); color: var(--primary); padding: 0.5rem 1.25rem; display: inline-flex; align-items: center; height: 42px; box-sizing: border-box;">Dashboard Admin</a>
+                <form action="{{ route('logout') }}" method="POST" style="margin: 0; display: flex; align-items: center;">
                     @csrf
-                    <button type="submit" class="btn btn-primary" style="padding: 0.5rem 1rem;">Logout</button>
+                    <button type="submit" class="btn btn-primary" style="padding: 0.5rem 1.25rem; display: inline-flex; align-items: center; height: 42px; box-sizing: border-box; border: 1px solid transparent;">Logout</button>
                 </form>
             @else
                 <a href="{{ route('login') }}" class="btn btn-outline" style="border-color: transparent; color: var(--text-muted); font-size: 0.85rem;">
