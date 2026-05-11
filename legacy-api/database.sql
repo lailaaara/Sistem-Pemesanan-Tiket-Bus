@@ -55,7 +55,7 @@ CREATE TABLE public.pemesanan_pembayaran (
     tanggal_bayar TIMESTAMP,
     status_pembayaran VARCHAR(20)
 );
--- Dibuat Yosia Mario
+-- Dibuat Yosia Mario Hematang
 -- ============================================
 -- TABEL: tiket
 -- ============================================
