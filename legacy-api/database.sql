@@ -3,7 +3,7 @@
 -- ============================================
 CREATE DATABASE sistem_pemesanan_bus;
 -- Setelah database dibuat, pilih database di pgAdmin GUI sebelum menjalankan tabel/data
--- Dibuat Hening
+-- Dibuat Hening wijaya Imanda
 -- ============================================
 -- TABEL: bus
 -- ============================================
@@ -55,7 +55,7 @@ CREATE TABLE public.pemesanan_pembayaran (
     tanggal_bayar TIMESTAMP,
     status_pembayaran VARCHAR(20)
 );
--- Dibuat Mario
+-- Dibuat Yosia Mario
 -- ============================================
 -- TABEL: tiket
 -- ============================================
